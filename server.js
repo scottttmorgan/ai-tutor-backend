@@ -101,6 +101,52 @@ app.post("/api/chat", async (req, res) => {
 // LEADERSHIP SIM ROUTES
 // ============================================================
 
+// Text-to-speech only (for Jordan's opening line)
+app.post("/api/tts", async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: "text is required" });
+    }
+
+    if (!ELEVENLABS_API_KEY || !ELEVENLABS_VOICE_ID) {
+      return res.json({ audio: null });
+    }
+
+    const ttsResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": ELEVENLABS_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: "eleven_flash_v2_5",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+          },
+        }),
+      }
+    );
+
+    if (ttsResponse.ok) {
+      const audioBuffer = await ttsResponse.arrayBuffer();
+      const audioBase64 = Buffer.from(audioBuffer).toString("base64");
+      res.json({ audio: audioBase64 });
+    } else {
+      console.error("ElevenLabs TTS error:", ttsResponse.status);
+      res.json({ audio: null });
+    }
+  } catch (err) {
+    console.error("TTS error:", err?.message || err);
+    res.json({ audio: null });
+  }
+});
+
 // Main sim endpoint — Claude as Jordan + ElevenLabs TTS in one round trip
 app.post("/api/leadership-sim", async (req, res) => {
   try {
@@ -119,7 +165,6 @@ app.post("/api/leadership-sim", async (req, res) => {
     // If feedback turn, restructure messages so Claude sees the full convo as context
     let claudeMessages;
     if (isFeedbackTurn) {
-      // Send the whole conversation as a single user message for coaching review
       const convoTranscript = messages
         .map((m) => (m.role === "assistant" ? `Jordan: ${m.content}` : `Manager: ${m.content}`))
         .join("\n\n");
@@ -146,7 +191,7 @@ app.post("/api/leadership-sim", async (req, res) => {
       .map((block) => block.text)
       .join("\n");
 
-    // Call ElevenLabs TTS (skip if no key configured)
+    // Call ElevenLabs TTS (skip for feedback)
     let audioBase64 = null;
     if (ELEVENLABS_API_KEY && ELEVENLABS_VOICE_ID && !isFeedbackTurn) {
       try {
@@ -177,7 +222,6 @@ app.post("/api/leadership-sim", async (req, res) => {
         }
       } catch (ttsErr) {
         console.error("ElevenLabs TTS error:", ttsErr?.message || ttsErr);
-        // Continue without audio — text still works
       }
     }
 
