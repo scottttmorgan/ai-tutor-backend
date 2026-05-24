@@ -72,11 +72,19 @@ app.get("/api/health", (_req, res) => {
 // Storyline tutor chat
 app.post("/api/chat", async (req, res) => {
   try {
-    const { userPrompt } = req.body;
+    const { systemPrompt, userPrompt } = req.body;
 
     if (!userPrompt) {
       return res.status(400).json({ error: "userPrompt is required" });
     }
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
+      system: systemPrompt || "You are a helpful e-learning tutor. Respond in plain text only. Never use markdown formatting such as headers (#), bold (**), bullet points, or tables. Keep responses conversational and concise.",
+      messages: [{ role: "user", content: userPrompt }],
+    });
+    
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
