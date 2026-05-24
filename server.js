@@ -61,7 +61,7 @@ For each dimension, give a heading, then 2-3 sentences of specific, behavioral f
 Keep the total response under 250 words. No scores or ratings — qualitative only.`;
 
 // ============================================================
-// EXISTING ROUTES (unchanged)
+// EXISTING ROUTES
 // ============================================================
 
 // Health check
@@ -82,14 +82,6 @@ app.post("/api/chat", async (req, res) => {
       model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: systemPrompt || "You are a helpful e-learning tutor. Respond in plain text only. Never use markdown formatting such as headers (#), bold (**), bullet points, or tables. Keep responses conversational and concise.",
-      messages: [{ role: "user", content: userPrompt }],
-    });
-    
-
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: "You are a helpful e-learning tutor. Respond in plain text only. Never use markdown formatting such as headers (#), bold (**), bullet points, or tables. Keep responses conversational and concise.",
       messages: [{ role: "user", content: userPrompt }],
     });
 
