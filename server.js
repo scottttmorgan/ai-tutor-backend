@@ -81,6 +81,7 @@ app.post("/api/chat", async (req, res) => {
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1024,
+      system: "You are a helpful e-learning tutor. Respond in plain text only. Never use markdown formatting such as headers (#), bold (**), bullet points, or tables. Keep responses conversational and concise.",
       messages: [{ role: "user", content: userPrompt }],
     });
 
