@@ -34,7 +34,7 @@ app.get("/api/health", (_req, res) => {
 // Chat endpoint
 app.post("/api/chat", async (req, res) => {
   try {
-    const { userPrompt } = req.body;
+    const { systemPrompt, userPrompt } = req.body;
 
     if (!userPrompt) {
       return res.status(400).json({ error: "userPrompt is required" });
@@ -43,6 +43,8 @@ app.post("/api/chat", async (req, res) => {
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1024,
+      system: systemPrompt || "You are a helpful assistant.",
+messages: [{ role: "user", content: userPrompt }],
       messages: [{ role: "user", content: userPrompt }],
     });
 
