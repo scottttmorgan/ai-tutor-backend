@@ -35,7 +35,6 @@ app.get("/api/health", (_req, res) => {
 app.post("/api/chat", async (req, res) => {
   try {
     const { userPrompt } = req.body;
-
     if (!userPrompt) {
       return res.status(400).json({ error: "userPrompt is required" });
     }
@@ -55,6 +54,41 @@ app.post("/api/chat", async (req, res) => {
   } catch (err) {
     console.error("Claude API error:", err?.message || err);
     res.status(500).json({ error: "Failed to get a response from the AI." });
+  }
+});
+
+// ============================================================
+// ACOTAR TRAINING GAME endpoint
+// ============================================================
+// Powers "A Court of Prompts and Practical Magic".
+// Takes a full messages array (+ optional system prompt) so the
+// game can grade prompts, role-play characters, and transform
+// real work. Returns { text }.
+// ============================================================
+app.post("/api/acotar", async (req, res) => {
+  try {
+    const { messages, system, max_tokens } = req.body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: "messages array is required" });
+    }
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: max_tokens || 1024,
+      system: system || undefined,
+      messages: messages,
+    });
+
+    const text = response.content
+      .filter((block) => block.type === "text")
+      .map((block) => block.text)
+      .join("\n");
+
+    res.json({ text });
+  } catch (err) {
+    console.error("ACOTAR API error:", err?.message || err);
+    res.status(500).json({ error: "Something went wrong casting the spell." });
   }
 });
 
